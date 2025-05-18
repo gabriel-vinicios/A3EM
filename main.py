@@ -67,9 +67,8 @@ def main():
         n = ler_inteiro("Dimensão do sistema n (1–10): ", 1, 10)
         A, b = ler_matriz(n)
         # cópias para não alterar original em caso de nova tentativa
-        import copy
-        A_copy = copy.deepcopy(A)
-        b_copy = copy.deepcopy(b)
+        A_copy = A
+        b_copy = b
         sol = eliminacao_gauss(A_copy, b_copy)
         if sol is None:
             print("\nO sistema é singular ou mal condicionado. Não há solução única.")
