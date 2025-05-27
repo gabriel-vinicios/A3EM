@@ -21,6 +21,84 @@ def eliminacao_gauss(A, b):
         x[i] = (b[i] - soma) / A[i][i]
     return x
 
+def gauss_jordan(A, b):
+    n = len(A)
+    m = len(A[0])
+    if n != m:
+        return None
+    # Monta matriz aumentada
+    M = [A[i][:] + [b[i]] for i in range(n)]
+    for i in range(n):
+        # Pivoteamento
+        max_row = max(range(i, n), key=lambda r: abs(M[r][i]))
+        if abs(M[max_row][i]) < 1e-12:
+            return None
+        if max_row != i:
+            M[i], M[max_row] = M[max_row], M[i]
+        # Normaliza linha
+        piv = M[i][i]
+        M[i] = [v / piv for v in M[i]]
+        # Zera as outras linhas
+        for j in range(n):
+            if j != i:
+                fator = M[j][i]
+                M[j] = [M[j][k] - fator * M[i][k] for k in range(n+1)]
+    return [M[i][-1] for i in range(n)]
+
+def determinante(M):
+    # Calcula determinante por eliminação de Gauss
+    n = len(M)
+    A = [row[:] for row in M]
+    det = 1
+    for i in range(n):
+        max_row = max(range(i, n), key=lambda r: abs(A[r][i]))
+        if abs(A[max_row][i]) < 1e-12:
+            return 0
+        if max_row != i:
+            A[i], A[max_row] = A[max_row], A[i]
+            det *= -1
+        det *= A[i][i]
+        for j in range(i+1, n):
+            fator = A[j][i] / A[i][i]
+            for k in range(i, n):
+                A[j][k] -= fator * A[i][k]
+    return det
+
+def cramer(A, b):
+    n = len(A)
+    if n != len(A[0]):
+        return None
+    det_A = determinante(A)
+    if abs(det_A) < 1e-12:
+        return None
+    x = []
+    for i in range(n):
+        Ai = [row[:] for row in A]
+        for j in range(n):
+            Ai[j][i] = b[j]
+        det_Ai = determinante(Ai)
+        x.append(det_Ai / det_A)
+    return x
+
+def montante(A, b):
+    n = len(A)
+    if n != len(A[0]):
+        return None
+    # Monta matriz aumentada
+    M = [A[i][:] + [b[i]] for i in range(n)]
+    p = 1
+    for k in range(n):
+        piv = M[k][k]
+        if abs(piv) < 1e-12:
+            return None
+        for i in range(n):
+            if i != k:
+                for j in range(k+1, n+1):
+                    M[i][j] = (M[k][k]*M[i][j] - M[i][k]*M[k][j]) / p
+                M[i][k] = 0
+        p = piv
+    return [M[i][n]/M[i][i] for i in range(n)]
+
 class SistemaLinearApp:
     def __init__(self, root):
         self.root = root
@@ -29,6 +107,7 @@ class SistemaLinearApp:
         self.n = tk.IntVar(value=2)  # colunas
         self.entries_A = []
         self.entries_b = []
+        self.metodo = tk.StringVar(value="Gauss")
         self.setup_dimensao()
 
     def setup_dimensao(self):
@@ -41,6 +120,12 @@ class SistemaLinearApp:
         tk.Spinbox(frame_dim, from_=1, to=10, textvariable=self.m, width=5).grid(row=0, column=1)
         tk.Label(frame_dim, text="Colunas (n):").grid(row=0, column=2)
         tk.Spinbox(frame_dim, from_=1, to=10, textvariable=self.n, width=5).grid(row=0, column=3)
+        tk.Label(self.root, text="Método de resolução:").pack(pady=(10,0))
+        frame_met = tk.Frame(self.root)
+        frame_met.pack()
+        metodos = ["Gauss", "Gauss-Jordan", "Cramer", "Montante"]
+        for i, nome in enumerate(metodos):
+            tk.Radiobutton(frame_met, text=nome, variable=self.metodo, value=nome).grid(row=0, column=i)
         tk.Button(self.root, text="Confirmar", command=self.setup_matriz).pack(pady=10)
 
     def setup_matriz(self):
@@ -75,15 +160,27 @@ class SistemaLinearApp:
         except ValueError:
             messagebox.showerror("Erro", "Preencha todos os campos com números válidos.")
             return
-        if m != n:
-            messagebox.showerror("Erro", "O método de eliminação de Gauss só resolve sistemas quadrados (m = n).")
+        metodo = self.metodo.get()
+        if metodo in ("Gauss", "Gauss-Jordan", "Cramer", "Montante") and m != n:
+            messagebox.showerror("Erro", f"O método {metodo} só resolve sistemas quadrados (m = n).")
             return
-        # Cópia manual das listas
-        A_copia = [row[:] for row in A]
-        b_copia = b[:]
-        sol = eliminacao_gauss(A_copia, b_copia)
+        if metodo == "Gauss":
+            A_copia = [row[:] for row in A]
+            b_copia = b[:]
+            sol = eliminacao_gauss(A_copia, b_copia)
+        elif metodo == "Gauss-Jordan":
+            A_copia = [row[:] for row in A]
+            b_copia = b[:]
+            sol = gauss_jordan(A_copia, b_copia)
+        elif metodo == "Cramer":
+            sol = cramer(A, b)
+        elif metodo == "Montante":
+            sol = montante(A, b)
+        else:
+            messagebox.showerror("Erro", "Método não implementado.")
+            return
         if sol is None:
-            messagebox.showinfo("Resultado", "O sistema é singular ou mal condicionado.\nNão há solução única.")
+            messagebox.showinfo("Resultado", "O sistema é singular, mal condicionado ou não possui solução única.")
         else:
             resultado = "\n".join([f"x[{i+1}] = {xi:.6f}" for i, xi in enumerate(sol)])
             messagebox.showinfo("Solução encontrada", resultado)
