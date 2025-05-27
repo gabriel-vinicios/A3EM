@@ -1,83 +1,94 @@
-def ler_inteiro(mensagem, minimo=None, maximo=None):
-    while True:
-        try:
-            valor = int(input(mensagem))
-            if minimo is not None and valor < minimo:
-                print(f"Valor deve ser ≥ {minimo}. Tente novamente.")
-            elif maximo is not None and valor > maximo:
-                print(f"Valor deve ser ≤ {maximo}. Tente novamente.")
-            else:
-                return valor
-        except ValueError:
-            print("Entrada inválida. Digite um número inteiro.")
-
-def ler_matriz(n):
-    A = [[0.0]*n for _ in range(n)]
-    b = [0.0]*n
-    print("\nInforme os coeficientes da matriz A e do termo independente b:")
-    for i in range(n):
-        for j in range(n):
-            while True:
-                try:
-                    A[i][j] = float(input(f"A[{i+1},{j+1}] = "))
-                    break
-                except ValueError:
-                    print("Número inválido. Tente novamente.")
-        while True:
-            try:
-                b[i] = float(input(f"b[{i+1}] = "))
-                break
-            except ValueError:
-                print("Número inválido. Tente novamente.")
-    return A, b
+import tkinter as tk
+from tkinter import messagebox
 
 def eliminacao_gauss(A, b):
     n = len(A)
-    # Pivoteamento parcial e eliminação
     for k in range(n):
-        # encontra o maior pivô na coluna k abaixo (e incluindo) a linha k
         max_row = max(range(k, n), key=lambda i: abs(A[i][k]))
         if abs(A[max_row][k]) < 1e-12:
-            return None  # sistema singular ou mal condicionado
-        # troca de linhas
+            return None
         if max_row != k:
             A[k], A[max_row] = A[max_row], A[k]
             b[k], b[max_row] = b[max_row], b[k]
-        # elimina abaixo
         for i in range(k+1, n):
             fator = A[i][k] / A[k][k]
             for j in range(k, n):
                 A[i][j] -= fator * A[k][j]
             b[i] -= fator * b[k]
-    # retro-substituição
     x = [0.0]*n
     for i in range(n-1, -1, -1):
         soma = sum(A[i][j]*x[j] for j in range(i+1, n))
         x[i] = (b[i] - soma) / A[i][i]
     return x
 
-def imprimir_solucao(x):
-    print("\nSolução encontrada:")
-    for i, xi in enumerate(x, start=1):
-        print(f"x[{i}] = {xi:.6f}")
+class SistemaLinearApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Calculadora de Sistemas Lineares")
+        self.m = tk.IntVar(value=2)  # linhas
+        self.n = tk.IntVar(value=2)  # colunas
+        self.entries_A = []
+        self.entries_b = []
+        self.setup_dimensao()
 
-def main():
-    print("=== CALCULADORA DE SISTEMAS LINEARES (até 10×10) ===")
-    while True:
-        n = ler_inteiro("Dimensão do sistema n (1–10): ", 1, 10)
-        A, b = ler_matriz(n)
-        # cópias para não alterar original em caso de nova tentativa
-        A_copy = A
-        b_copy = b
-        sol = eliminacao_gauss(A_copy, b_copy)
+    def setup_dimensao(self):
+        for widget in self.root.winfo_children():
+            widget.destroy()
+        tk.Label(self.root, text="Dimensão da matriz A:").pack()
+        frame_dim = tk.Frame(self.root)
+        frame_dim.pack()
+        tk.Label(frame_dim, text="Linhas (m):").grid(row=0, column=0)
+        tk.Spinbox(frame_dim, from_=1, to=10, textvariable=self.m, width=5).grid(row=0, column=1)
+        tk.Label(frame_dim, text="Colunas (n):").grid(row=0, column=2)
+        tk.Spinbox(frame_dim, from_=1, to=10, textvariable=self.n, width=5).grid(row=0, column=3)
+        tk.Button(self.root, text="Confirmar", command=self.setup_matriz).pack(pady=10)
+
+    def setup_matriz(self):
+        m = self.m.get()
+        n = self.n.get()
+        for widget in self.root.winfo_children():
+            widget.destroy()
+        tk.Label(self.root, text=f"Insira os coeficientes da matriz A ({m}x{n}) e vetor b ({m}):").pack()
+        frame = tk.Frame(self.root)
+        frame.pack()
+        self.entries_A = []
+        self.entries_b = []
+        for i in range(m):
+            row_entries = []
+            for j in range(n):
+                e = tk.Entry(frame, width=5)
+                e.grid(row=i, column=j, padx=2, pady=2)
+                row_entries.append(e)
+            self.entries_A.append(row_entries)
+            e_b = tk.Entry(frame, width=5, bg="#e0f7fa")
+            e_b.grid(row=i, column=n, padx=5)
+            self.entries_b.append(e_b)
+        tk.Button(self.root, text="Calcular", command=self.calcular).pack(pady=10)
+        tk.Button(self.root, text="Alterar dimensão", command=self.setup_dimensao).pack()
+
+    def calcular(self):
+        m = self.m.get()
+        n = self.n.get()
+        try:
+            A = [[float(self.entries_A[i][j].get()) for j in range(n)] for i in range(m)]
+            b = [float(self.entries_b[i].get()) for i in range(m)]
+        except ValueError:
+            messagebox.showerror("Erro", "Preencha todos os campos com números válidos.")
+            return
+        if m != n:
+            messagebox.showerror("Erro", "O método de eliminação de Gauss só resolve sistemas quadrados (m = n).")
+            return
+        # Cópia manual das listas
+        A_copia = [row[:] for row in A]
+        b_copia = b[:]
+        sol = eliminacao_gauss(A_copia, b_copia)
         if sol is None:
-            print("\nO sistema é singular ou mal condicionado. Não há solução única.")
+            messagebox.showinfo("Resultado", "O sistema é singular ou mal condicionado.\nNão há solução única.")
         else:
-            imprimir_solucao(sol)
-        cont = input("\nDeseja resolver outro sistema? (s/N): ").strip().lower()
-        if cont != 's':
-            print("Encerrando a calculadora. Até logo!")
-            break
+            resultado = "\n".join([f"x[{i+1}] = {xi:.6f}" for i, xi in enumerate(sol)])
+            messagebox.showinfo("Solução encontrada", resultado)
 
 if __name__ == "__main__":
-    main()
+    root = tk.Tk()
+    app = SistemaLinearApp(root)
+    root.mainloop()
