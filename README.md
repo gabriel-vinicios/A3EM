@@ -84,6 +84,105 @@ Ao final, a solução é obtida por:
   x_i = \frac{a_{i,n+1}}{a_{ii}}
 \\]
 
+## Cálculos em LaTeX dos Métodos
+
+### Eliminação de Gauss
+Dado o sistema:
+\(
+\begin{cases}
+  a_{11}x_1 + a_{12}x_2 + \cdots + a_{1n}x_n = b_1 \\
+  a_{21}x_1 + a_{22}x_2 + \cdots + a_{2n}x_n = b_2 \\
+  \vdots \\
+  a_{n1}x_1 + a_{n2}x_2 + \cdots + a_{nn}x_n = b_n
+\end{cases}
+\)
+
+A matriz aumentada é:
+\(
+\left[
+\begin{array}{cccc|c}
+  a_{11} & a_{12} & \cdots & a_{1n} & b_1 \\
+  a_{21} & a_{22} & \cdots & a_{2n} & b_2 \\
+  \vdots & \vdots & \ddots & \vdots & \vdots \\
+  a_{n1} & a_{n2} & \cdots & a_{nn} & b_n
+\end{array}
+\right]
+\)
+
+Operação de eliminação:
+\(
+a_{ij}^{(k+1)} = a_{ij}^{(k)} - \frac{a_{ik}^{(k)}}{a_{kk}^{(k)}} a_{kj}^{(k)}
+\)
+
+Substituição retroativa:
+\(
+x_i = \frac{1}{a_{ii}} \left( b_i - \sum_{j=i+1}^n a_{ij} x_j \right)
+\)
+
+---
+
+### Gauss-Jordan
+Transforma a matriz aumentada em:
+\(
+\left[
+\begin{array}{cccc|c}
+  1 & 0 & \cdots & 0 & x_1 \\
+  0 & 1 & \cdots & 0 & x_2 \\
+  \vdots & \vdots & \ddots & \vdots & \vdots \\
+  0 & 0 & \cdots & 1 & x_n
+\end{array}
+\right]
+\)
+
+Operação de pivoteamento e normalização:
+\(
+\text{Para cada linha } i:\quad \frac{L_i}{a_{ii}} \rightarrow L_i
+\)
+
+Zerando as outras linhas:
+\(
+L_k \leftarrow L_k - a_{ki} L_i \quad (k \neq i)
+\)
+
+---
+
+### Regra de Cramer
+Para o sistema \( Ax = b \):
+\(
+x_i = \frac{\det(A_i)}{\det(A)}
+\)
+
+Exemplo para 3x3:
+\(
+A = \begin{bmatrix} a_{11} & a_{12} & a_{13} \\ a_{21} & a_{22} & a_{23} \\ a_{31} & a_{32} & a_{33} \end{bmatrix},\quad
+b = \begin{bmatrix} b_1 \\ b_2 \\ b_3 \end{bmatrix}
+\)
+
+\(
+A_1 = \begin{bmatrix} b_1 & a_{12} & a_{13} \\ b_2 & a_{22} & a_{23} \\ b_3 & a_{32} & a_{33} \end{bmatrix}
+\)
+
+\(
+x_1 = \frac{\det(A_1)}{\det(A)}
+\)
+
+---
+
+### Método de Montante
+Para cada etapa k:
+\(
+a_{ij}^{(k+1)} = \frac{a_{kk}^{(k)} a_{ij}^{(k)} - a_{ik}^{(k)} a_{kj}^{(k)}}{p}
+\)
+Onde:
+- \( p = a_{k-1,k-1}^{(k-1)} \) (\( p=1 \) na primeira etapa)
+
+Ao final:
+\(
+x_i = \frac{a_{i,n+1}}{a_{ii}}
+\)
+
+---
+
 ## Estrutura do código
 - `eliminacao_gauss(A, b)`: Função que implementa o método de Gauss.
 - `gauss_jordan(A, b)`: Função que implementa o método de Gauss-Jordan.
