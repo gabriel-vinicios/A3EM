@@ -103,8 +103,7 @@ class SistemaLinearApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Calculadora de Sistemas Lineares")
-        self.m = tk.IntVar(value=2)  # linhas
-        self.n = tk.IntVar(value=2)  # colunas
+        self.n = tk.IntVar(value=2)  # ordem da matriz quadrada
         self.entries_A = []
         self.entries_b = []
         self.metodo = tk.StringVar(value="Gauss")
@@ -113,13 +112,11 @@ class SistemaLinearApp:
     def setup_dimensao(self):
         for widget in self.root.winfo_children():
             widget.destroy()
-        tk.Label(self.root, text="Dimensão da matriz A:").pack()
+        tk.Label(self.root, text="Ordem da matriz quadrada (n x n):\n(n = número de linhas = número de colunas)").pack()
         frame_dim = tk.Frame(self.root)
         frame_dim.pack()
-        tk.Label(frame_dim, text="Linhas (m):").grid(row=0, column=0)
-        tk.Spinbox(frame_dim, from_=1, to=10, textvariable=self.m, width=5).grid(row=0, column=1)
-        tk.Label(frame_dim, text="Colunas (n):").grid(row=0, column=2)
-        tk.Spinbox(frame_dim, from_=1, to=10, textvariable=self.n, width=5).grid(row=0, column=3)
+        tk.Label(frame_dim, text="Ordem (n):").grid(row=0, column=0)
+        tk.Spinbox(frame_dim, from_=1, to=10, textvariable=self.n, width=5).grid(row=0, column=1)
         tk.Label(self.root, text="Método de resolução:").pack(pady=(10,0))
         frame_met = tk.Frame(self.root)
         frame_met.pack()
@@ -129,16 +126,15 @@ class SistemaLinearApp:
         tk.Button(self.root, text="Confirmar", command=self.setup_matriz).pack(pady=10)
 
     def setup_matriz(self):
-        m = self.m.get()
         n = self.n.get()
         for widget in self.root.winfo_children():
             widget.destroy()
-        tk.Label(self.root, text=f"Insira os coeficientes da matriz A ({m}x{n}) e vetor b ({m}):").pack()
+        tk.Label(self.root, text=f"Insira os coeficientes da matriz A ({n} linhas x {n} colunas) e vetor b ({n} linhas):").pack()
         frame = tk.Frame(self.root)
         frame.pack()
         self.entries_A = []
         self.entries_b = []
-        for i in range(m):
+        for i in range(n):
             row_entries = []
             for j in range(n):
                 e = tk.Entry(frame, width=5)
@@ -148,22 +144,19 @@ class SistemaLinearApp:
             e_b = tk.Entry(frame, width=5, bg="#e0f7fa")
             e_b.grid(row=i, column=n, padx=5)
             self.entries_b.append(e_b)
+        tk.Label(self.root, text="Cada linha representa uma equação e cada coluna representa uma incógnita.").pack(pady=(5,0))
         tk.Button(self.root, text="Calcular", command=self.calcular).pack(pady=10)
-        tk.Button(self.root, text="Alterar dimensão", command=self.setup_dimensao).pack()
+        tk.Button(self.root, text="Alterar ordem", command=self.setup_dimensao).pack()
 
     def calcular(self):
-        m = self.m.get()
         n = self.n.get()
         try:
-            A = [[float(self.entries_A[i][j].get()) for j in range(n)] for i in range(m)]
-            b = [float(self.entries_b[i].get()) for i in range(m)]
+            A = [[float(self.entries_A[i][j].get()) for j in range(n)] for i in range(n)]
+            b = [float(self.entries_b[i].get()) for i in range(n)]
         except ValueError:
             messagebox.showerror("Erro", "Preencha todos os campos com números válidos.")
             return
         metodo = self.metodo.get()
-        if metodo in ("Gauss", "Gauss-Jordan", "Cramer", "Montante") and m != n:
-            messagebox.showerror("Erro", f"O método {metodo} só resolve sistemas quadrados (m = n).")
-            return
         if metodo == "Gauss":
             A_copia = [row[:] for row in A]
             b_copia = b[:]
