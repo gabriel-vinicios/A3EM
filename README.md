@@ -35,9 +35,11 @@ Este software é uma calculadora gráfica para resolução de sistemas lineares 
 O método consiste em transformar o sistema Ax = b em uma matriz triangular superior, usando operações elementares nas linhas:
 
 - Para cada linha i > k:
+$$
   \\[ a_{ij} = a_{ij} - \frac{a_{ik}}{a_{kk}} a_{kj} \quad \text{para}\ j = k, ..., n \\\\
   b_i = b_i - \frac{a_{ik}}{a_{kk}} b_k \\\\
 \\]
+$$
 Após a matriz estar triangular, resolve-se por substituição retroativa:
 
 \\[
