@@ -1,7 +1,27 @@
+"""
+Calculadora de Sistemas Lineares
+--------------------------------
+
+Este programa implementa uma interface gráfica para resolução de sistemas lineares de equações, permitindo ao usuário escolher entre os métodos de Gauss, Gauss-Jordan, Regra de Cramer e Montante.
+
+- Desenvolvido em Python com Tkinter.
+- Aceita apenas matrizes quadradas (n x n).
+- Permite entrada manual dos coeficientes e termos independentes.
+- Exibe a solução ou mensagens de erro apropriadas.
+"""
+
 import tkinter as tk
 from tkinter import messagebox
 
+# ----------------------
+# Métodos Numéricos
+# ----------------------
 def eliminacao_gauss(A, b):
+    """
+    Resolve o sistema linear Ax = b pelo método da Eliminação de Gauss.
+    Modifica A e b para triangular superior e resolve por substituição retroativa.
+    Retorna o vetor solução x ou None se o sistema for singular.
+    """
     n = len(A)
     for k in range(n):
         max_row = max(range(k, n), key=lambda i: abs(A[i][k]))
@@ -22,6 +42,11 @@ def eliminacao_gauss(A, b):
     return x
 
 def gauss_jordan(A, b):
+    """
+    Resolve o sistema linear Ax = b pelo método de Gauss-Jordan.
+    Transforma a matriz aumentada em identidade e retorna o vetor solução x.
+    Retorna None se o sistema for singular ou não quadrado.
+    """
     n = len(A)
     m = len(A[0])
     if n != m:
@@ -46,6 +71,10 @@ def gauss_jordan(A, b):
     return [M[i][-1] for i in range(n)]
 
 def determinante(M):
+    """
+    Calcula o determinante da matriz quadrada M usando eliminação de Gauss.
+    Retorna o valor do determinante.
+    """
     # Calcula determinante por eliminação de Gauss
     n = len(M)
     A = [row[:] for row in M]
@@ -65,6 +94,10 @@ def determinante(M):
     return det
 
 def cramer(A, b):
+    """
+    Resolve o sistema linear Ax = b pela Regra de Cramer.
+    Retorna o vetor solução x ou None se o sistema não for quadrado ou for singular.
+    """
     n = len(A)
     if n != len(A[0]):
         return None
@@ -81,6 +114,10 @@ def cramer(A, b):
     return x
 
 def montante(A, b):
+    """
+    Resolve o sistema linear Ax = b pelo método de Montante (Bareiss).
+    Retorna o vetor solução x ou None se o sistema não for quadrado ou for singular.
+    """
     n = len(A)
     if n != len(A[0]):
         return None
@@ -99,8 +136,16 @@ def montante(A, b):
         p = piv
     return [M[i][n]/M[i][i] for i in range(n)]
 
+# ----------------------
+# Interface Gráfica
+# ----------------------
 class SistemaLinearApp:
+    """
+    Classe principal da interface gráfica para resolução de sistemas lineares.
+    Permite ao usuário escolher a ordem da matriz, o método de resolução e inserir os coeficientes.
+    """
     def __init__(self, root):
+        # Inicializa a janela principal e variáveis de controle
         self.root = root
         self.root.title("Calculadora de Sistemas Lineares")
         self.n = tk.IntVar(value=2)  # ordem da matriz quadrada
@@ -110,6 +155,9 @@ class SistemaLinearApp:
         self.setup_dimensao()
 
     def setup_dimensao(self):
+        """
+        Exibe a tela para seleção da ordem da matriz quadrada e do método de resolução.
+        """
         for widget in self.root.winfo_children():
             widget.destroy()
         tk.Label(self.root, text="Ordem da matriz quadrada (n x n):\n(n = número de linhas = número de colunas)").pack()
@@ -126,6 +174,9 @@ class SistemaLinearApp:
         tk.Button(self.root, text="Confirmar", command=self.setup_matriz).pack(pady=10)
 
     def setup_matriz(self):
+        """
+        Exibe a tela para entrada dos coeficientes da matriz A e do vetor b.
+        """
         n = self.n.get()
         for widget in self.root.winfo_children():
             widget.destroy()
@@ -149,6 +200,9 @@ class SistemaLinearApp:
         tk.Button(self.root, text="Alterar ordem", command=self.setup_dimensao).pack()
 
     def calcular(self):
+        """
+        Lê os valores inseridos, executa o método selecionado e exibe o resultado ou mensagem de erro.
+        """
         n = self.n.get()
         try:
             A = [[float(self.entries_A[i][j].get()) for j in range(n)] for i in range(n)]
@@ -179,6 +233,7 @@ class SistemaLinearApp:
             messagebox.showinfo("Solução encontrada", resultado)
 
 if __name__ == "__main__":
+    # Inicializa e executa a aplicação Tkinter
     root = tk.Tk()
     app = SistemaLinearApp(root)
     root.mainloop()
