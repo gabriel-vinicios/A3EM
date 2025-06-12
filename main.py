@@ -16,31 +16,6 @@ from tkinter import messagebox
 # ----------------------
 # Métodos Numéricos
 # ----------------------
-def eliminacao_gauss(A, b):
-    """
-    Resolve o sistema linear Ax = b pelo método da Eliminação de Gauss.
-    Modifica A e b para triangular superior e resolve por substituição retroativa.
-    Retorna o vetor solução x ou None se o sistema for singular.
-    """
-    n = len(A)
-    for k in range(n):
-        max_row = max(range(k, n), key=lambda i: abs(A[i][k]))
-        if abs(A[max_row][k]) < 1e-12:
-            return None
-        if max_row != k:
-            A[k], A[max_row] = A[max_row], A[k]
-            b[k], b[max_row] = b[max_row], b[k]
-        for i in range(k+1, n):
-            fator = A[i][k] / A[k][k]
-            for j in range(k, n):
-                A[i][j] -= fator * A[k][j]
-            b[i] -= fator * b[k]
-    x = [0.0]*n
-    for i in range(n-1, -1, -1):
-        soma = sum(A[i][j]*x[j] for j in range(i+1, n))
-        x[i] = (b[i] - soma) / A[i][i]
-    return x
-
 def gauss_jordan(A, b):
     """
     Resolve o sistema linear Ax = b pelo método de Gauss-Jordan.
@@ -70,79 +45,13 @@ def gauss_jordan(A, b):
                 M[j] = [M[j][k] - fator * M[i][k] for k in range(n+1)]
     return [M[i][-1] for i in range(n)]
 
-def determinante(M):
-    """
-    Calcula o determinante da matriz quadrada M usando eliminação de Gauss.
-    Retorna o valor do determinante.
-    """
-    # Calcula determinante por eliminação de Gauss
-    n = len(M)
-    A = [row[:] for row in M]
-    det = 1
-    for i in range(n):
-        max_row = max(range(i, n), key=lambda r: abs(A[r][i]))
-        if abs(A[max_row][i]) < 1e-12:
-            return 0
-        if max_row != i:
-            A[i], A[max_row] = A[max_row], A[i]
-            det *= -1
-        det *= A[i][i]
-        for j in range(i+1, n):
-            fator = A[j][i] / A[i][i]
-            for k in range(i, n):
-                A[j][k] -= fator * A[i][k]
-    return det
-
-def cramer(A, b):
-    """
-    Resolve o sistema linear Ax = b pela Regra de Cramer.
-    Retorna o vetor solução x ou None se o sistema não for quadrado ou for singular.
-    """
-    n = len(A)
-    if n != len(A[0]):
-        return None
-    det_A = determinante(A)
-    if abs(det_A) < 1e-12:
-        return None
-    x = []
-    for i in range(n):
-        Ai = [row[:] for row in A]
-        for j in range(n):
-            Ai[j][i] = b[j]
-        det_Ai = determinante(Ai)
-        x.append(det_Ai / det_A)
-    return x
-
-def montante(A, b):
-    """
-    Resolve o sistema linear Ax = b pelo método de Montante (Bareiss).
-    Retorna o vetor solução x ou None se o sistema não for quadrado ou for singular.
-    """
-    n = len(A)
-    if n != len(A[0]):
-        return None
-    # Monta matriz aumentada
-    M = [A[i][:] + [b[i]] for i in range(n)]
-    p = 1
-    for k in range(n):
-        piv = M[k][k]
-        if abs(piv) < 1e-12:
-            return None
-        for i in range(n):
-            if i != k:
-                for j in range(k+1, n+1):
-                    M[i][j] = (M[k][k]*M[i][j] - M[i][k]*M[k][j]) / p
-                M[i][k] = 0
-        p = piv
-    return [M[i][n]/M[i][i] for i in range(n)]
-
 # ----------------------
 # Interface Gráfica
 # ----------------------
 class SistemaLinearApp:
     """
     Classe principal da interface gráfica para resolução de sistemas lineares.
-    Permite ao usuário escolher a ordem da matriz, o método de resolução e inserir os coeficientes.
+    Permite ao usuário escolher a ordem da matriz e inserir os coeficientes.
     """
     def __init__(self, root):
         # Inicializa a janela principal e variáveis de controle
@@ -151,12 +60,11 @@ class SistemaLinearApp:
         self.n = tk.IntVar(value=2)  # ordem da matriz quadrada
         self.entries_A = []
         self.entries_b = []
-        self.metodo = tk.StringVar(value="Gauss")
         self.setup_dimensao()
 
     def setup_dimensao(self):
         """
-        Exibe a tela para seleção da ordem da matriz quadrada e do método de resolução.
+        Exibe a tela para seleção da ordem da matriz quadrada.
         """
         for widget in self.root.winfo_children():
             widget.destroy()
@@ -165,12 +73,6 @@ class SistemaLinearApp:
         frame_dim.pack()
         tk.Label(frame_dim, text="Ordem (n):").grid(row=0, column=0)
         tk.Spinbox(frame_dim, from_=1, to=10, textvariable=self.n, width=5).grid(row=0, column=1)
-        tk.Label(self.root, text="Método de resolução:").pack(pady=(10,0))
-        frame_met = tk.Frame(self.root)
-        frame_met.pack()
-        metodos = ["Gauss", "Gauss-Jordan", "Cramer", "Montante"]
-        for i, nome in enumerate(metodos):
-            tk.Radiobutton(frame_met, text=nome, variable=self.metodo, value=nome).grid(row=0, column=i)
         tk.Button(self.root, text="Confirmar", command=self.setup_matriz).pack(pady=10)
 
     def setup_matriz(self):
@@ -201,7 +103,7 @@ class SistemaLinearApp:
 
     def calcular(self):
         """
-        Lê os valores inseridos, executa o método selecionado e exibe o resultado ou mensagem de erro.
+        Lê os valores inseridos, executa o método de Eliminação de Gauss-Jordan e exibe o resultado ou mensagem de erro.
         """
         n = self.n.get()
         try:
@@ -210,22 +112,9 @@ class SistemaLinearApp:
         except ValueError:
             messagebox.showerror("Erro", "Preencha todos os campos com números válidos.")
             return
-        metodo = self.metodo.get()
-        if metodo == "Gauss":
-            A_copia = [row[:] for row in A]
-            b_copia = b[:]
-            sol = eliminacao_gauss(A_copia, b_copia)
-        elif metodo == "Gauss-Jordan":
-            A_copia = [row[:] for row in A]
-            b_copia = b[:]
-            sol = gauss_jordan(A_copia, b_copia)
-        elif metodo == "Cramer":
-            sol = cramer(A, b)
-        elif metodo == "Montante":
-            sol = montante(A, b)
-        else:
-            messagebox.showerror("Erro", "Método não implementado.")
-            return
+        A_copia = [row[:] for row in A]
+        b_copia = b[:]
+        sol = gauss_jordan(A_copia, b_copia)
         if sol is None:
             messagebox.showinfo("Resultado", "O sistema é singular, mal condicionado ou não possui solução única.")
         else:
